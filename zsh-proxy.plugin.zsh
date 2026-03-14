@@ -16,7 +16,6 @@ __read_proxy_config() {
 	__ZSHPROXY_SOCKS5=$(cat "${ZDOTDIR:-${HOME}}/.zsh-proxy/socks5")
 	__ZSHPROXY_HTTP=$(cat "${ZDOTDIR:-${HOME}}/.zsh-proxy/http")
 	__ZSHPROXY_NO_PROXY=$(cat "${ZDOTDIR:-${HOME}}/.zsh-proxy/no_proxy")
-	__ZSHPROXY_GIT_PROXY_TYPE=$(cat "${ZDOTDIR:-${HOME}}/.zsh-proxy/git_proxy_type")
 }
 
 __check_whether_init() {
@@ -80,10 +79,6 @@ __config_proxy() {
 	echo -n "[no proxy domain] {Default as 'localhost,127.0.0.1,localaddress,.localdomain.com'}
 (comma separate domains): "
 	read -r __read_no_proxy
-
-	echo -n "[git proxy type] {Default as socks5}
-(socks5 or http): "
-	read -r __read_git_proxy_type
 	echo "========================================"
 
 	if [ -z "${__read_socks5}" ]; then
@@ -98,9 +93,6 @@ __config_proxy() {
 	if [ -z "${__read_no_proxy}" ]; then
 		__read_no_proxy="localhost,127.0.0.1,localaddress,.localdomain.com"
 	fi
-	if [ -z "${__read_git_proxy_type}" ]; then
-		__read_git_proxy_type="socks5"
-	fi
 
 	echo "http://${__read_http}" >"${ZDOTDIR:-${HOME}}/.zsh-proxy/http"
 	if [ "${__read_socks5_type}" = "2" ]; then
@@ -109,7 +101,6 @@ __config_proxy() {
 		echo "socks5://${__read_socks5}" >"${ZDOTDIR:-${HOME}}/.zsh-proxy/socks5"
 	fi
 	echo "${__read_no_proxy}" >"${ZDOTDIR:-${HOME}}/.zsh-proxy/no_proxy"
-	echo "${__read_git_proxy_type}" >"${ZDOTDIR:-${HOME}}/.zsh-proxy/git_proxy_type"
 
 	__read_proxy_config
 }
@@ -172,23 +163,6 @@ __disable_proxy_all() {
 	unset no_proxy
 }
 
-# Proxy for Git
-
-__enable_proxy_git() {
-	if [ "${__ZSHPROXY_GIT_PROXY_TYPE}" = "http" ]; then
-		git config --global http.proxy "${__ZSHPROXY_HTTP}"
-		git config --global https.proxy "${__ZSHPROXY_HTTP}"
-	else
-		git config --global http.proxy "${__ZSHPROXY_SOCKS5}"
-		git config --global https.proxy "${__ZSHPROXY_SOCKS5}"
-	fi
-}
-
-__disable_proxy_git() {
-	git config --global --unset http.proxy
-	git config --global --unset https.proxy
-}
-
 # Clone with SSH can be sfind at https://github.com/comwrg/FUCK-GFW#git
 
 # NPM
@@ -242,7 +216,6 @@ __enable_proxy() {
 		echo "========================================"
 		echo -n "Resetting proxy... "
 		__disable_proxy_all
-		__disable_proxy_git
 		__disable_proxy_npm
 		__disable_proxy_apt
 		echo "Done!"
@@ -250,8 +223,6 @@ __enable_proxy() {
 		echo "Enable proxy for:"
 		echo "- shell"
 		__enable_proxy_all
-		echo "- git"
-		__enable_proxy_git
 		# npm & yarn & pnpm"
 		__enable_proxy_npm
 		# apt"
@@ -262,7 +233,6 @@ __enable_proxy() {
 
 __disable_proxy() {
 	__disable_proxy_all
-	__disable_proxy_git
 	__disable_proxy_npm
 	__disable_proxy_apt
 }
@@ -294,7 +264,6 @@ init_proxy() {
 	touch "${ZDOTDIR:-${HOME}}/.zsh-proxy/http"
 	touch "${ZDOTDIR:-${HOME}}/.zsh-proxy/socks5"
 	touch "${ZDOTDIR:-${HOME}}/.zsh-proxy/no_proxy"
-	touch "${ZDOTDIR:-${HOME}}/.zsh-proxy/git_proxy_type"
 	echo "----------------------------------------"
 	echo "Great! The zsh-proxy is initialized"
 	echo ""
